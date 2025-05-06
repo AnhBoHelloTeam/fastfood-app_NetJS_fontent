@@ -9,9 +9,12 @@ import Admin from './pages/Admin';
 import Checkout from './pages/Checkout';
 import ProductDetail from './pages/ProductDetail';
 import CategoryPage from './pages/CategoryPage';
+import OrderDetail from './pages/OrderDetail';
+import Orders from './pages/Orders';
+import AdminDashboard from './pages/AdminDashboard';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
-
+import FeedbackHistory from './pages/FeedbackHistory';
 
 const App = () => {
   return (
@@ -25,8 +28,13 @@ const App = () => {
         <Route path="/chat" element={<Chat />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/checkout" element={<Checkout />} />
+        <Route path="/orders" element={<Orders />} />
+        <Route path="/orders/:id" element={<OrderDetail />} />
+        <Route path="/admin/dashboard" element={<AdminDashboard />} />
         <Route path="/products/:id" element={<ProductDetail />} />
         <Route path="/category/:id" element={<CategoryPage />} />
+        <Route path="/feedback-history" element={<FeedbackHistory />} />
+
       </Routes>
     </div>
   );

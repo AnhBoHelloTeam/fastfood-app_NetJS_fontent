@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { useLocation, Link } from 'react-router-dom';
-import { getProducts, getCategories } from '../services/api';
+import { useLocation, Link, useNavigate } from 'react-router-dom';
+import { getProducts, getCategories, getProductFeedback } from '../services/api';
 import { Product, Category } from '../types';
 import ProductCard from '../components/ProductCard';
+import { FaShoppingCart, FaStar } from 'react-icons/fa';
 
 const Home = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -10,6 +11,7 @@ const Home = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const location = useLocation();
+  const navigate = useNavigate();
   const searchParams = new URLSearchParams(location.search);
   const search = searchParams.get('search') || '';
 
@@ -17,21 +19,29 @@ const Home = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        // Lấy danh mục và sản phẩm đồng thời
         const [categoriesRes, productsRes] = await Promise.all([
           getCategories(),
           getProducts(),
         ]);
         setCategories(categoriesRes.data);
-
-        // Lọc sản phẩm theo tìm kiếm
         let filteredProducts = productsRes.data;
         if (search) {
           filteredProducts = productsRes.data.filter((p: Product) =>
             p.name.toLowerCase().includes(search.toLowerCase())
           );
         }
-        setProducts(filteredProducts);
+        // Lấy đánh giá trung bình cho mỗi sản phẩm
+        const productsWithRatings = await Promise.all(
+          filteredProducts.map(async (product: Product) => {
+            try {
+              const response = await getProductFeedback(product._id);
+              return { ...product, ...response.data };
+            } catch (err) {
+              return { ...product, averageRating: 0, totalFeedbacks: 0 };
+            }
+          })
+        );
+        setProducts(productsWithRatings);
       } catch (err: any) {
         setError(err.response?.data?.message || 'Không thể tải dữ liệu');
       } finally {
@@ -43,6 +53,28 @@ const Home = () => {
 
   return (
     <div className="container mt-4 mb-5">
+      {/* Nút xem đơn hàng và lịch sử đánh giá */}
+      <div className="mb-4 flex justify-end space-x-2">
+        <button
+          className="flex items-center bg-orange-200 text-black px-4 py-2 rounded hover:bg-orange-300 transition"
+          style={{ fontWeight: '500' }}
+          onClick={() => navigate('/orders')}
+        >
+          {/* @ts-ignore */}
+          <FaShoppingCart className="mr-2" />
+          Xem đơn hàng
+        </button>
+        <button
+          className="flex items-center bg-orange-200 text-black px-4 py-2 rounded hover:bg-orange-300 transition"
+          style={{ fontWeight: '500' }}
+          onClick={() => navigate('/feedback-history')}
+        >
+          {/* @ts-ignore */}
+          <FaStar className="mr-2" />
+          Lịch sử đánh giá
+        </button>
+      </div>
+
       {/* Danh sách danh mục */}
       <div className="mb-4">
         <h3 className="mb-3" style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>

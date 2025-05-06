@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { createOrder, applyPromotion, getSupplier, getChatMessages, sendChatMessage, getPaymentMethods, getPromotions } from '../services/api';
+import { createOrder, applyPromotion, getSupplier, getChatMessages, sendChatMessage, getPaymentMethods, getPromotions, clearCartItems } from '../services/api';
 import { CartItem as CartItemType, Promotion, Supplier, PaymentMethod } from '../types';
 import PromotionDetailModal from '../components/PromotionDetailModal';
 
@@ -16,7 +16,7 @@ const Checkout = () => {
   const { state } = useLocation();
   const navigate = useNavigate();
   const { cartItems, subtotal, shippingFee, promotion: initialPromotion, userId } = state || {};
-  const [paymentMethod, setPaymentMethod] = useState<string>('');
+  const [paymentMethod, setPaymentMethod] = useState<string>('cash');
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [promotionCode, setPromotionCode] = useState<string>('');
   const [promotion, setPromotion] = useState<Promotion | null>(initialPromotion || null);
@@ -29,6 +29,8 @@ const Checkout = () => {
   const [showPromotionDropdown, setShowPromotionDropdown] = useState<boolean>(false);
   const [showDetailModal, setShowDetailModal] = useState<boolean>(false);
   const [selectedPromotion, setSelectedPromotion] = useState<Promotion | null>(null);
+
+  const validPaymentMethods = ['cash', 'card', 'bank_transfer'];
 
   const isDiscountActive = (startDiscount?: string, endDiscount?: string): boolean => {
     if (!startDiscount || !endDiscount) return false;
@@ -57,12 +59,28 @@ const Checkout = () => {
     const fetchPaymentMethods = async () => {
       try {
         const response = await getPaymentMethods();
-        setPaymentMethods(response.data);
-        if (response.data.length > 0) {
-          setPaymentMethod(response.data[0].value);
+        const methods = response.data.map((method: PaymentMethod) => {
+          let value = method.value.toLowerCase();
+          if (!validPaymentMethods.includes(value)) {
+            if (value.includes('cash') || value.includes('cod')) value = 'cash';
+            else if (value.includes('card') || value.includes('credit')) value = 'card';
+            else if (value.includes('bank') || value.includes('transfer')) value = 'bank_transfer';
+            else value = 'cash';
+          }
+          return { ...method, value };
+        });
+        setPaymentMethods(methods);
+        if (methods.length > 0) {
+          setPaymentMethod(methods[0].value);
         }
       } catch (err: any) {
-        setError('Không thể tải phương thức thanh toán');
+        setError('Không thể tải phương thức thanh toán. Mặc định: Tiền mặt');
+        setPaymentMethods([
+          { id: 1, name: 'Tiền mặt', value: 'cash' },
+          { id: 2, name: 'Thẻ tín dụng', value: 'card' },
+          { id: 3, name: 'Chuyển khoản ngân hàng', value: 'bank_transfer' },
+        ]);
+        setPaymentMethod('cash');
       }
     };
     const fetchSuppliers = async () => {
@@ -181,6 +199,10 @@ const Checkout = () => {
 
   const handleConfirmOrder = async () => {
     try {
+      if (!validPaymentMethods.includes(paymentMethod)) {
+        setError('Phương thức thanh toán không hợp lệ. Vui lòng chọn lại.');
+        return;
+      }
       const orderData: any = {
         userId,
         totalAmount: calculateTotal(),
@@ -193,16 +215,23 @@ const Checkout = () => {
           productId: item.product._id,
           quantity: item.quantity,
         })),
+        ...(promotion?.code && { promotion_code: promotion.code }),
       };
-      if (promotion?.code) {
-        orderData.promotion_code = promotion.code;
+      console.log('orderData:', orderData);
+      const response = await createOrder(orderData);
+      // Reset giỏ hàng
+      try {
+        await clearCartItems();
+        console.log('Giỏ hàng đã được reset');
+      } catch (err: any) {
+        console.error('Lỗi khi reset giỏ hàng:', err.response?.data);
       }
-      await createOrder(orderData);
+      localStorage.removeItem('cart');
       alert('Đặt hàng thành công!');
-      navigate('/');
+      navigate(`/orders/${response.data._id}`);
     } catch (err: any) {
-      console.error('Lỗi đặt hàng:', err);
-      setError(err.response?.data?.message || 'Không thể đặt hàng');
+      console.error('Lỗi đặt hàng:', err.response?.data);
+      setError(err.response?.data?.message || 'Không thể đặt hàng. Vui lòng thử lại.');
     }
   };
 
@@ -320,14 +349,14 @@ const Checkout = () => {
                         {promo.discountType === 'percentage'
                           ? `${promo.discountValue}%`
                           : `${promo.discountValue.toLocaleString('vi-VN')} VND`}
-                        , Max {promo.max_discount_amount.toLocaleString('vi-VN')} VNĐ
-                        , Đơn từ {promo.min_order_value.toLocaleString('vi-VN')} VNĐ)
+                        , tối đa {promo.max_discount_amount.toLocaleString('vi-VN')} VNĐ
+                        , tối thiểu {promo.min_order_value.toLocaleString('vi-VN')} VNĐ)
                       </span>
                       <button
                         className="btn btn-link btn-sm"
                         onClick={() => handleShowDetail(promo)}
                       >
-                         chi tiết
+                        Xem chi tiết
                       </button>
                     </div>
                   ))}

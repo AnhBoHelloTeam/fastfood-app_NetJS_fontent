@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { getCategories, getSuppliers, getProducts, getUsers, getPromotions } from '../services/api';
 import { Category, Supplier, Product, User, Promotion } from '../types';
 import CategoryForm from '../components/CategoryForm';
@@ -13,6 +14,7 @@ import PromotionForm from '../components/PromotionForm';
 import PromotionList from '../components/PromotionList';
 
 const Admin = () => {
+  const navigate = useNavigate();
   const [categories, setCategories] = useState<Category[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -55,9 +57,18 @@ const Admin = () => {
 
   return (
     <div className="container mt-4 mb-5">
-      <h1 className="mb-4" style={{ fontSize: '2rem', fontWeight: 'bold', color: '#ee4d2d' }}>
-        Trang quản trị
-      </h1>
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: '#ee4d2d' }}>
+          Trang quản trị
+        </h1>
+        <button
+          className="btn btn-outline-primary"
+          onClick={() => navigate('/admin/dashboard')}
+          title="Xem thông báo"
+        >
+          <i className="bi bi-bell"></i>
+        </button>
+      </div>
       {error && <div className="alert alert-danger">{error}</div>}
       {loading && <div className="text-center mt-5">Đang tải...</div>}
 
@@ -224,6 +235,9 @@ const styles = `
   }
   textarea.form-control {
     min-height: 100px;
+  }
+  .bi-bell {
+    font-size: 1.5rem;
   }
 `;
 

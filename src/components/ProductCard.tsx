@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Product } from '../types';
 import { addCartItem } from '../services/api';
+import { FaStar } from 'react-icons/fa';
 
 interface ProductCardProps {
   product: Product;
@@ -42,6 +43,8 @@ const ProductCard = ({ product }: ProductCardProps) => {
   };
 
   const hasActiveDiscount = isDiscountActive(product.start_discount, product.end_discount);
+  const rating = product.averageRating || 0;
+  const totalFeedbacks = product.totalFeedbacks || 0;
 
   return (
     <div className="card h-100 shadow-sm">
@@ -76,6 +79,16 @@ const ProductCard = ({ product }: ProductCardProps) => {
             </span>
           )}
         </div>
+        {/* <div className="mb-2 d-flex align-items-center">
+          {[...Array(5)].map((_, index) => (
+            // @ts-ignore
+            <FaStar
+              key={index}
+              className={`text-sm ${index < Math.round(rating) ? 'text-yellow-400' : 'text-gray-300'}`}
+            />
+          ))}
+          <span className="text-muted small ms-2">({totalFeedbacks} đánh giá)</span>
+        </div> */}
         {(product.start_discount || product.end_discount) && (
           <p className="card-text text-muted small mb-2">
             Giảm giá: {formatDate(product.start_discount)} - {formatDate(product.end_discount)}

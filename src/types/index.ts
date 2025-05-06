@@ -26,6 +26,8 @@ export interface Product {
   discount_price?: number;
   start_discount?: string;
   end_discount?: string;
+  averageRating?: number;
+  totalFeedbacks?: number;
 }
 
 export interface Category {
@@ -89,4 +91,26 @@ export interface User {
   avatar?: string;
   delivery_address?: string;
   is_active?: boolean;
+}
+
+export interface Feedback {
+  _id: number;
+  rating: number;
+  comment: string;
+  product: Product;
+  user: User;
+  createdAt: string;
+}
+
+export interface Order {
+  _id: number;
+  user: User;
+  orderItems: {
+    _id: number;
+    product: Product;
+    quantity: number;
+  }[];
+  totalAmount: number;
+  status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
+  createdAt: string;
 }

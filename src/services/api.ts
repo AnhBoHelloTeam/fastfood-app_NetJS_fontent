@@ -19,6 +19,17 @@ api.interceptors.request.use(
   (error) => Promise.reject(error),
 );
 
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  },
+);
+
 interface RegisterFormData {
   name: string;
   email: string;
@@ -26,8 +37,8 @@ interface RegisterFormData {
   role: string;
   address: string;
   phone: string;
-  avatar: string;
-  delivery_address: string;
+  avatar?: string;
+  delivery_address?: string;
   is_active?: boolean;
 }
 
@@ -62,18 +73,6 @@ interface SupplierFormData {
   email: string;
 }
 
-interface UserFormData {
-  name: string;
-  email: string;
-  password?: string;
-  role: string;
-  address: string;
-  phone: string;
-  avatar?: string;
-  delivery_address?: string;
-  is_active?: boolean;
-}
-
 interface PromotionFormData {
   code: string;
   discountValue: number;
@@ -87,6 +86,18 @@ interface PromotionFormData {
   usage_count?: number;
 }
 
+interface OrderFormData {
+  userId: number;
+  totalAmount: number;
+  status: string;
+  shipping_address: string;
+  shipping_fee: number;
+  paymentMethod: string;
+  payment_status: string;
+  promotion_code?: string;
+  orderItems: { productId: number; quantity: number }[];
+}
+
 export const getProducts = () => api.get('/products');
 export const getProductById = (id: number) => api.get(`/products/${id}`);
 export const addProduct = (data: ProductFormData) => api.post('/products', data);
@@ -96,7 +107,11 @@ export const getCartItems = () => api.get('/cart-items');
 export const addCartItem = (data: { productId: number; quantity: number }) => api.post('/cart-items', data);
 export const updateCartItem = (id: number, data: { quantity: number }) => api.patch(`/cart-items/${id}`, data);
 export const removeCartItem = (id: number) => api.delete(`/cart-items/${id}`);
-export const createOrder = (data: any) => api.post('/orders', data);
+export const clearCartItems = () => api.delete('/cart-items');
+export const createOrder = (data: OrderFormData) => api.post('/orders', data);
+export const getOrder = (id: number) => api.get(`/orders/${id}`);
+export const confirmOrder = (id: number) => api.patch(`/orders/${id}/confirm`);
+export const getNotifications = () => api.get('/notifications');
 export const applyPromotion = (code: string) => api.get(`/promotions/code/${code}`);
 export const register = (data: RegisterFormData) => api.post('/auth/register', data);
 export const login = (data: { email: string; password: string }) => api.post('/auth/login', data);
@@ -115,8 +130,8 @@ export const getCategories = () => api.get('/categories');
 export const getProductsByCategory = (categoryId: number) => api.get(`/categories/${categoryId}/products`);
 export const getUsers = () => api.get('/users');
 export const getUserById = (id: number) => api.get(`/users/${id}`);
-export const createUser = (data: UserFormData) => api.post('/users', data);
-export const updateUser = (id: number, data: Partial<UserFormData>) => api.put(`/users/${id}`, data);
+export const createUser = (data: RegisterFormData) => api.post('/users', data);
+export const updateUser = (id: number, data: Partial<RegisterFormData>) => api.put(`/users/${id}`, data);
 export const deleteUser = (id: number) => api.delete(`/users/${id}`);
 export const getPromotions = () => api.get('/promotions');
 export const getPromotionById = (id: number) => api.get(`/promotions/${id}`);
@@ -124,3 +139,7 @@ export const addPromotion = (data: PromotionFormData) => api.post('/promotions',
 export const updatePromotion = (id: number, data: Partial<PromotionFormData>) => api.put(`/promotions/${id}`, data);
 export const deletePromotion = (id: number) => api.delete(`/promotions/${id}`);
 export const togglePromotionActive = (id: number) => api.patch(`/promotions/${id}/toggle`);
+export const getProductFeedback = (productId: number) => api.get(`/feedbacks/product/${productId}`);
+export const getOrders = () => api.get('/orders');
+export const getFeedbacks = () => api.get('/feedbacks');
+export const getCurrentUser = () => api.get('/users/me');
