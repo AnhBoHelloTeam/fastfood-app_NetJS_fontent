@@ -57,7 +57,6 @@ interface ProductFormData {
   end_discount?: string;
   quantity_in_stock: number;
   supplier: number;
-  createdBy: number;
 }
 
 interface CategoryFormData {
@@ -116,8 +115,8 @@ export const getNotifications = () => api.get('/notifications');
 export const applyPromotion = (code: string) => api.get(`/promotions/code/${code}`);
 export const register = (data: RegisterFormData) => api.post('/auth/register', data);
 export const login = (data: { email: string; password: string }) => api.post('/auth/login', data);
-export const getChatMessages = (receiverId: number) => api.get('/chat-messages', { params: { receiverId } });
-export const sendChatMessage = (data: { receiverId: number; content: string }) => api.post('/chat-messages', data);
+export const getChatMessages = (receiverId: number) => api.get(`/chat-messages/${receiverId}`);
+export const sendChatMessage = (data: { receiverId: number; message: string }) => api.post('/chat-messages', data);
 export const getSupplier = (id: number) => api.get(`/suppliers/${id}`);
 export const getSuppliers = () => api.get('/suppliers');
 export const createSupplier = (data: SupplierFormData) => api.post('/suppliers', data);
