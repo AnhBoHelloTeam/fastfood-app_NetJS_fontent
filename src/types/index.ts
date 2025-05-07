@@ -22,6 +22,12 @@ export interface Product {
     phone: string;
     email: string;
   };
+  createdBy: {
+    _id: number;
+    name: string;
+    email: string;
+    role: string;
+  };
   description_detail?: string;
   discount_price?: number;
   start_discount?: string;
@@ -69,9 +75,9 @@ export interface Promotion {
 
 export interface ChatMessage {
   _id: number;
-  senderId: number;
-  receiverId: number;
-  message: string;
+  sender: User;
+  receiver: User;
+  content: string;
   createdAt: string;
 }
 

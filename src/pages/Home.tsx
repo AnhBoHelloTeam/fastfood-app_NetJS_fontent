@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
-import { getProducts, getCategories, getProductFeedback } from '../services/api';
+import { getProducts, getCategories, getProductById, getProductFeedback } from '../services/api';
 import { Product, Category } from '../types';
 import ProductCard from '../components/ProductCard';
 import { FaShoppingCart, FaStar } from 'react-icons/fa';
@@ -34,9 +34,16 @@ const Home = () => {
         const productsWithRatings = await Promise.all(
           filteredProducts.map(async (product: Product) => {
             try {
+              // Kiểm tra sản phẩm tồn tại
+              await getProductById(product._id);
               const response = await getProductFeedback(product._id);
-              return { ...product, ...response.data };
-            } catch (err) {
+              return { ...product, averageRating: response.data.averageRating || 0, totalFeedbacks: response.data.totalFeedbacks || 0 };
+            } catch (err: any) {
+              // Không in lỗi 404 ra console, trả về mặc định
+              if (err.response?.status === 404) {
+                return { ...product, averageRating: 0, totalFeedbacks: 0 };
+              }
+              console.warn(`Lỗi khi lấy feedback cho sản phẩm ${product._id}:`, err.message);
               return { ...product, averageRating: 0, totalFeedbacks: 0 };
             }
           })
